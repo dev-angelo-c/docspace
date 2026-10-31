@@ -1,5 +1,12 @@
 # DocSpace changelog
 
+## v0.5.1 (2026-10-31)
+
+- One launcher: `DocSpace.bat` + `docspace.ps1` replace Start/Update/Setup DocSpace.bat, run.ps1, update.ps1 and setup.ps1.
+- Each run installs missing prerequisites, picks up a newer zip from Downloads, keeps this version's zip and the most recent prior zip, deletes older zips and every other unzipped DocSpace copy, then builds and runs.
+- Shared build cache at `C:\cargo-target\docspace` (this window only, no global setting), so new versions no longer recompile every crate. The first run moves an existing cache there.
+- `-Release` builds the installer; `-DryRun` lists what would be deleted.
+
 ## v0.5.0 (2026-10-24)
 
 - Tags replace ratings. Add your own tags to any file or folder ("+ tag" on sources and folder cards), remove them with x, and browse everything by tag in the new Tags window. Ratings and the Rated window are gone, and stored ratings are deleted. Tags are stored by file path, ready for the file explorer.

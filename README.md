@@ -19,41 +19,33 @@ Everything below is typed into **Windows PowerShell** (Start menu, type "PowerSh
 **1. Unzip** the release zip (for example `docspace-app-v0.2.0.zip`) into the folder you want to
 run it from: right-click it, **Extract All…**. Open the `docspace-app` folder inside.
 
-**2. Double-click `Setup DocSpace.bat`.** It installs whatever is missing: the C++ Build Tools,
-WebView2, Rust, the Tauri CLI and the two Ollama models. It doesn't need `winget`, and it's safe
-to run again. The first run downloads a few GB and can take 20-30 minutes. Approve the Windows
-admin prompt when it appears. Ollama itself must already be installed and running.
+**2. Double-click `DocSpace.bat`.** It's the only launcher, and every run does the same four things:
 
-**3. Double-click `Start DocSpace.bat`.** The first start compiles the app and takes about
-3-8 minutes. After that it opens in seconds.
+1. Installs anything missing: the C++ Build Tools, WebView2, Rust, the Tauri CLI and the two Ollama
+   models. The very first run downloads a few GB (20-30 minutes); approve the admin prompt.
+   Ollama itself must already be installed and running.
+2. If Downloads has a DocSpace zip newer than the copy you started, it unzips that and continues there.
+3. Cleans up Downloads: keeps this version's zip and the most recent prior zip, and deletes older
+   DocSpace zips and every other unzipped DocSpace folder.
+4. Builds and runs DocSpace with one shared build cache, `C:\cargo-target\docspace`, so a new
+   version only recompiles what changed.
+
+Your index database, tags and settings live in `%APPDATA%` and are never touched.
 
 The PowerShell equivalents, run from the `docspace-app` folder:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\setup.ps1
-powershell -ExecutionPolicy Bypass -File .\run.ps1
-powershell -ExecutionPolicy Bypass -File .\run.ps1 -Installer   # optional: build a Windows installer
+powershell -ExecutionPolicy Bypass -File .\docspace.ps1            # build + run (development)
+powershell -ExecutionPolicy Bypass -File .\docspace.ps1 -Release   # build the Windows installer
+powershell -ExecutionPolicy Bypass -File .\docspace.ps1 -Setup     # only check prerequisites
+powershell -ExecutionPolicy Bypass -File .\docspace.ps1 -DryRun    # list what would be deleted, do nothing
 ```
 
 ## Updating
 
-New releases arrive as `docspace-app-vX.Y.Z.zip`. Save them to your **Downloads** folder; you
-don't need to unzip them.
-
-- **Start DocSpace.bat** checks Downloads every time it starts and installs a newer release
-  automatically.
-- **Update DocSpace.bat** does the same without starting the app.
-
-Each update copies the new files over your `docspace-app` folder. It keeps the compiled build
-cache, so only changed code is recompiled, and it never touches your index or tags, which
-live in `%APPDATA%`. Afterwards it deletes older DocSpace zips from Downloads, keeping only the
-newest two: the current version and the previous one, for rolling back. To roll back:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\update.ps1 -Version 0.2.0   # e.g. back to 0.2.0 after 0.3.0 is installed
-```
-
-Add `-NoCleanup` to keep every old zip. `CHANGELOG.md` lists what changed in each version.
+Save the new `docspace-app-vX.Y.Z.zip` to **Downloads** and double-click `DocSpace.bat` in either
+the old or the new copy. To roll back, unzip the kept prior zip and run its `DocSpace.bat`.
+`CHANGELOG.md` lists what changed in each version.
 
 ---
 
@@ -108,13 +100,9 @@ over (or use **Reset index** in Settings).
 
 ```
 docspace-app/
-├─ Start DocSpace.bat      double-click: update if needed, then start
-├─ Update DocSpace.bat     double-click: install the newest release from Downloads
-├─ Setup DocSpace.bat      double-click: install prerequisites
-├─ setup.ps1               installs prerequisites (run once)
-├─ update.ps1              the updater
+├─ DocSpace.bat           double-click: set up, clean up, build and run
+├─ docspace.ps1            the one script (-Release, -Setup, -DryRun)
 ├─ CHANGELOG.md            what changed in each version
-├─ run.ps1                 starts the app, or builds the installer with -Installer
 ├─ src/                    the UI (plain HTML/CSS/JS, no Node needed)
 │  ├─ index.html
 │  ├─ styles.css
@@ -141,9 +129,9 @@ Run the unit tests with `cd src-tauri; cargo test` in PowerShell.
 
 | Problem | Fix |
 |---|---|
-| `linker 'link.exe' not found` | The Build Tools install didn't finish. Run `setup.ps1` again. |
-| `cargo` / `ollama` is not recognized | Open a new PowerShell window. `run.ps1` finds Rust on its own. |
+| `linker 'link.exe' not found` | The Build Tools install didn't finish. Run `DocSpace.bat -Setup` again. |
+| `cargo` / `ollama` is not recognized | Open a new PowerShell window. `docspace.ps1` finds Rust on its own. |
 | Red "Ollama not reachable" pill | Start Ollama (Start menu → Ollama), then click the pill to re-check. |
 | "Ollama doesn't have `…` yet" | `ollama pull <that model>` |
 | "This index was built with `…`" | You changed the embedding model. Change it back, or **Reset index** and re-index. |
-| First build very slow | Normal. Windows Defender scanning `target\` also slows it; you can add the project folder as an exclusion. |
+| First build very slow | Normal. Windows Defender scanning the build cache also slows it; you can add `C:\cargo-target` as an exclusion. |
