@@ -1,0 +1,38 @@
+[package]
+name = "docspace"
+version = "0.5.0"
+description = "Point it at a folder, ask questions about what's inside. Local RAG with Ollama + SQLite."
+edition = "2021"
+
+[lib]
+# Library name differs from the binary name to avoid a known Windows linker clash.
+name = "docspace_lib"
+crate-type = ["rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"     # native "choose folder" dialog
+tauri-plugin-opener = "2"     # open a source file / show it in Explorer
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+# Plain HTTP to the local Ollama server; no TLS stack needed.
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json"] }
+# SQLite compiled into the app (no install) + the sqlite-vec vector-search extension.
+rusqlite = { version = "0.32", features = ["bundled"] }
+sqlite-vec = "0.1.9"
+# Directory walker that honours .gitignore (same one ripgrep uses).
+ignore = "0.4"
+# Pure-Rust PDF text extraction.
+pdf-extract = "0.9"
+# Pictures are sent to Ollama's vision model as base64.
+base64 = "0.22"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true

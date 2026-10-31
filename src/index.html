@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DocSpace</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h4.2l1.8 2h7A1.5 1.5 0 0 1 20 7.5v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><circle cx="11" cy="13" r="2.6"/><path d="m13 15 2.6 2.6"/></svg>
+      <span>DocSpace</span>
+      <span id="app-version" class="version"></span>
+    </div>
+    <button id="log-btn" class="btn small ghost" title="Errors and activity, ready to copy">Log</button>
+    <button id="skipped-btn" class="btn small ghost" title="Files left out of the index, and why">Skipped</button>
+    <button id="tags-btn" class="btn small ghost" title="Browse your files and folders by tag"># Tags</button>
+    <button id="ollama-pill" class="pill" title="Re-check Ollama"><span class="dot"></span><span id="ollama-text">Checking Ollama…</span></button>
+    <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-head">
+        <h2>Folders</h2>
+        <button id="add-folder" class="btn primary">+ Add folder</button>
+      </div>
+      <label class="sub-toggle muted" title="Off: only the files directly inside the folder you pick are indexed.">
+        <input type="checkbox" id="add-recursive" checked /> Include subfolders when adding
+      </label>
+
+      <section id="progress" class="progress-card" hidden>
+        <div class="progress-top">
+          <strong id="progress-phase">Indexing</strong>
+          <button id="stop-btn" class="btn small ghost">Stop</button>
+        </div>
+        <div class="bar"><div id="progress-fill"></div></div>
+        <div class="progress-meta"><span id="progress-count"></span><span id="progress-chunks"></span></div>
+        <div id="progress-current" class="mono ellipsis"></div>
+        <div id="progress-sub" class="muted progress-sub"></div>
+        <button id="skip-btn" class="btn small ghost skip-btn" hidden title="Stop indexing this file now and leave it out of future runs">Skip this file</button>
+      </section>
+
+      <ul id="folders" class="folders"></ul>
+      <p id="no-folders" class="muted empty-side" hidden>No folders yet. Add one and DocSpace will read every document and source file in it, split the text into chunks, and store a vector for each chunk.</p>
+
+      <footer class="side-foot">
+        <div id="index-stats" class="muted"></div>
+      </footer>
+    </aside>
+
+    <main class="content">
+      <div id="transcript" class="transcript">
+        <div id="welcome" class="welcome">
+          <h1>Ask your files anything.</h1>
+          <p class="muted">Questions are matched by meaning, not keywords. The answer comes from your local Ollama model, with numbered links back to the files it used.</p>
+          <div class="examples">
+            <button class="example">Which folders look like they might be a webapp?</button>
+            <button class="example">What does the lease say about pets?</button>
+            <button class="example">Where is the database connection configured?</button>
+          </div>
+        </div>
+      </div>
+
+      <form id="composer" class="composer">
+        <textarea id="question" rows="1" placeholder="Ask a question about your indexed folders…" autocomplete="off"></textarea>
+        <button id="ask-btn" class="btn primary" type="submit">Ask</button>
+        <div class="composer-meta muted">
+          <label class="write-toggle" title="Off: show the matching files and excerpts in seconds, without waiting for the answer model.">
+            <input type="checkbox" id="write-answer" /> Write an answer
+          </label>
+          <label class="model-pick" title="The model that writes answers. Switching unloads the previous one.">Answer model
+            <select id="model-select"></select>
+          </label>
+          <span>Enter to ask · Shift+Enter for a new line</span>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <dialog id="settings">
+    <form method="dialog" id="settings-form">
+      <h2>Settings</h2>
+      <label>Ollama address
+        <input name="ollama_url" required placeholder="http://127.0.0.1:11434" />
+      </label>
+      <label>Embedding model <span class="hint">turns text into vectors</span>
+        <input name="embed_model" list="model-list" required />
+      </label>
+      <label>Answer model <span class="hint">writes the answer from the matches</span>
+        <input name="chat_model" list="model-list" required />
+      </label>
+      <label>Picture model <span class="hint">classifies pictures while indexing so you can search them. Only models that can read pictures are listed. With None, pictures aren't classified; they're listed under Skipped as "needs a picture model". <span id="picture-note"></span></span>
+        <select name="vision_model" class="select-input"></select>
+      </label>
+      <label class="check-row"><input type="checkbox" name="cpu_only" /> Run models on the CPU only
+        <span class="hint">often faster than weak integrated graphics. "Check my computer" tests it for you.</span>
+      </label>
+      <button type="button" id="bench-btn" class="btn">Check my computer…</button>
+      <div class="row">
+        <label>Chunks per answer
+          <input name="top_k" type="number" min="1" max="50" required />
+        </label>
+        <label>Context window (tokens)
+          <input name="num_ctx" type="number" min="2048" max="131072" step="1024" required />
+        </label>
+      </div>
+      <datalist id="model-list"></datalist>
+      <p class="hint" id="db-path"></p>
+      <div class="dialog-actions">
+        <button type="button" id="reset-btn" class="btn danger ghost">Reset index…</button>
+        <span class="spacer"></span>
+        <button type="button" id="settings-cancel" class="btn ghost">Cancel</button>
+        <button type="submit" value="save" class="btn primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="tagsdlg">
+    <div class="dlg-box">
+      <div class="dlg-head">
+        <h2>Tags</h2>
+        <button class="btn ghost" id="tags-close">Close</button>
+      </div>
+      <p class="hint">Your own labels on files and folders. Add them from the <b>+ tag</b> button on any source or folder card.
+        Click a tag to see everything that has it.</p>
+      <div id="tag-cloud" class="tag-cloud"></div>
+      <ul id="tagged-list" class="dlg-list"></ul>
+      <p id="tags-empty" class="muted" hidden>No tags yet. Use <b>+ tag</b> on a source under an answer, or on a folder card.</p>
+    </div>
+  </dialog>
+
+  <dialog id="benchdlg">
+    <div class="dlg-box">
+      <div class="dlg-head">
+        <h2>Check my computer</h2>
+        <button class="btn ghost" id="bench-close">Close</button>
+      </div>
+      <p class="hint">Times each installed answer model on this computer (reading a prompt and writing a short reply),
+        then estimates how long a typical DocSpace answer takes with each. Each model is unloaded after its test.
+        This takes a few minutes; 8B models are the slowest to test.</p>
+      <div class="bench-status"><span id="bench-label" class="muted"></span></div>
+      <div class="bar"><div id="bench-fill"></div></div>
+      <table class="bench-table">
+        <thead><tr><th>Model</th><th>Size</th><th>Reads</th><th>Writes</th><th>Typical answer</th></tr></thead>
+        <tbody id="bench-rows"></tbody>
+      </table>
+      <div id="bench-advice" class="bench-advice" hidden></div>
+      <div class="dialog-actions">
+        <span id="bench-when" class="muted"></span>
+        <span class="spacer"></span>
+        <button type="button" id="bench-run" class="btn primary">Start test</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="logdlg">
+    <div class="dlg-box">
+      <div class="dlg-head">
+        <h2>Log</h2>
+        <label class="muted"><input type="checkbox" id="log-errors" /> Errors only</label>
+        <button class="btn ghost" id="log-close">Close</button>
+      </div>
+      <p class="hint">Errors, indexing runs and answers, newest at the bottom. <b>Copy</b> includes your version and
+        settings, so it can be pasted straight into a chat for help.</p>
+      <textarea id="log-text" class="log-text" readonly spellcheck="false"></textarea>
+      <div class="dialog-actions">
+        <button type="button" id="log-clear" class="btn danger ghost">Clear log</button>
+        <button type="button" id="log-open" class="btn ghost">Open log file</button>
+        <span class="spacer"></span>
+        <button type="button" id="log-refresh" class="btn ghost">Refresh</button>
+        <button type="button" id="log-copy" class="btn primary">Copy</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="skipped">
+    <div class="dlg-box">
+      <div class="dlg-head">
+        <h2>Skipped files</h2>
+        <button class="btn ghost" id="skipped-close">Close</button>
+      </div>
+      <p class="hint">These files were left out of the index. <b>Include</b> a file and it's indexed the next time you
+        <b>Re-index</b> its folder. Size limits and the encoded-data check no longer apply to it.</p>
+      <div class="skipped-filters">
+        <select id="skip-reason">
+          <option value="">All reasons</option>
+          <option value="manual">Skipped by you</option>
+          <option value="too_large">Too large</option>
+          <option value="data_file">Large data file</option>
+          <option value="encoded">Encoded or minified</option>
+          <option value="needs_vision">Needs a picture model</option>
+        </select>
+        <input id="skip-search" type="search" placeholder="Filter by name or path, e.g. .md" />
+        <span id="skip-count" class="muted"></span>
+        <span class="spacer"></span>
+        <button id="include-all" class="btn small">Include all shown</button>
+      </div>
+      <ul id="skipped-list" class="skipped-list"></ul>
+      <p id="skipped-empty" class="muted" hidden></p>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script src="main.js"></script>
+</body>
+</html>
