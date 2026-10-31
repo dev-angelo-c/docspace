@@ -1,0 +1,15 @@
+# Weekly pull request that updates Cargo.lock to the newest compatible crates
+# (security fixes included). The "Check (no warnings)" workflow tests each one.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: weekly
+    groups:
+      all-crates:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

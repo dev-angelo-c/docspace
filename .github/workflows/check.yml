@@ -20,4 +20,4 @@ jobs:
           workspaces: src-tauri
       - name: cargo check
         working-directory: src-tauri
-        run: cargo check --all-targets --locked || cargo check --all-targets
+        run: cargo check --all-targets --locked
