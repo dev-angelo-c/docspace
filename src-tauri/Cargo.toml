@@ -20,16 +20,16 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 anyhow = "1"
 # Plain HTTP to the local Ollama server; no TLS stack needed.
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "json"] }
+reqwest = { version = "0.13", default-features = false, features = ["blocking", "json"] }
 # SQLite compiled into the app (no install) + the sqlite-vec vector-search extension.
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 sqlite-vec = "0.1.9"
 # Directory walker that honours .gitignore (same one ripgrep uses).
 ignore = "0.4"
 # Pure-Rust PDF text extraction.
-pdf-extract = "0.9"
+pdf-extract = "0.12"
 # Pictures are sent to Ollama's vision model as base64.
-base64 = "0.22"
+base64 = "0.23"
 
 [profile.release]
 codegen-units = 1
