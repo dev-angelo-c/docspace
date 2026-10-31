@@ -1,0 +1,23 @@
+# Fails any push or pull request whose Rust code produces a compiler warning,
+# so warnings are fixed when they appear instead of piling up.
+name: Check (no warnings)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    env:
+      RUSTFLAGS: -D warnings      # every warning becomes an error
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: cargo check
+        working-directory: src-tauri
+        run: cargo check --all-targets --locked || cargo check --all-targets

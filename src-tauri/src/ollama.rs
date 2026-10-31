@@ -227,17 +227,6 @@ impl Ollama {
         Ok(v["version"].as_str().unwrap_or("unknown").to_string())
     }
 
-    /// Models that have been pulled (`ollama list`).
-    pub fn list_models(&self) -> Result<Vec<String>> {
-        let v: Value = self.send(self.http.get(self.url("/api/tags")))?.json()?;
-        let mut names: Vec<String> = v["models"]
-            .as_array()
-            .map(|ms| ms.iter().filter_map(|m| m["name"].as_str().map(str::to_owned)).collect())
-            .unwrap_or_default();
-        names.sort();
-        Ok(names)
-    }
-
     /// Fail early, with the fix, if a model hasn't been pulled.
     pub fn ensure_model(&self, model: &str) -> Result<()> {
         let resp = self.send(self.http.post(self.url("/api/show")).json(&json!({ "model": model })))?;

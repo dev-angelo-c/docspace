@@ -1,5 +1,10 @@
 # DocSpace changelog
 
+## v0.5.2 (2026-10-31)
+
+- Removed the unused `list_models` method (build warning).
+- GitHub check: every push to main and every pull request is compiled on Windows with warnings treated as errors, so new warnings fail the check and get fixed right away.
+
 ## v0.5.1 (2026-10-31)
 
 - One launcher: `DocSpace.bat` + `docspace.ps1` replace Start/Update/Setup DocSpace.bat, run.ps1, update.ps1 and setup.ps1.
